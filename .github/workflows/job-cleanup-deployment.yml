@@ -112,12 +112,14 @@ jobs:
           fi
 
       - name: Cleanup Fabric Items
+        id: cleanup_fabric
         run: |
           bash ./infra/scripts/fabric_scripts/delete_fabric_items_scripts.sh \
             "${{ secrets.FABRIC_WORKSPACE_ID }}"
         continue-on-error: true
 
       - name: Delete deployment using azd
+        id: delete_rg
         run: |
           set -e
           echo "Deleting deployment..."
@@ -140,12 +142,14 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| **Resource Group deletion Status** | ${{ steps.delete_rg.outcome == 'success' && '✅ Initiated' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Resource Group deletion** | ${{ steps.delete_rg.outcome == 'success' && '✅ Success' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| **Resource Group** | \`${{ env.RESOURCE_GROUP_NAME }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Fabric Cleanup** | ${{ steps.cleanup_fabric.outcome == 'success' && '✅ Success' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ steps.delete_rg.outcome }}" == "success" ]]; then
             echo "### ✅ Cleanup Details" >> $GITHUB_STEP_SUMMARY
-            echo "- Successfully initiated deletion for Resource Group \`${{ env.RESOURCE_GROUP_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- Successfully deleted Resource Group \`${{ env.RESOURCE_GROUP_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- All Azure resources have been purged" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           else
             echo "### ❌ Cleanup Failed" >> $GITHUB_STEP_SUMMARY
@@ -153,4 +157,6 @@ jobs:
             echo "- Manual cleanup may be required for:" >> $GITHUB_STEP_SUMMARY
             echo "  - Resource Group: \`${{ env.RESOURCE_GROUP_NAME }}\`" >> $GITHUB_STEP_SUMMARY
             echo "- Check the cleanup-deployment job logs for detailed error information" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
           fi
+
