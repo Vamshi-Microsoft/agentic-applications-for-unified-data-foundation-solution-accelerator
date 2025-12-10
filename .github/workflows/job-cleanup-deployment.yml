@@ -77,6 +77,8 @@ jobs:
             curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
           fi
           az --version
+      - name: Setup Azure Developer CLI (Windows)
+        uses: Azure/setup-azd@v2
 
       - name: Login to Azure
         run: |
