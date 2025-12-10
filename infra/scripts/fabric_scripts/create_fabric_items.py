@@ -387,8 +387,6 @@ roleassignment_res = requests.post(fabric_ra_url, headers=fabric_headers, json=r
 
 if roleassignment_res.status_code == 201:
     print("✓ Role assignment created successfully")
-elif roleassignment_res.status_code == 409:
-    print("✓ Role assignment already exists (skipping)")
 else:
     print(f"⚠ Failed to create role assignment. Status: {roleassignment_res.status_code}")
     print(f"Response: {roleassignment_res.text}")
