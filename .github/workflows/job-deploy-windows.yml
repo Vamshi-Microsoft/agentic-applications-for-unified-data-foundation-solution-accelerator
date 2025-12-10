@@ -38,6 +38,12 @@ on:
       WEB_APPURL:
         description: "Container Web App URL"
         value: ${{ jobs.deploy-windows.outputs.WEB_APPURL }}
+      SOLUTION_NAME:
+        description: "Solution Name"
+        value: ${{ jobs.deploy-windows.outputs.SOLUTION_NAME }}
+      API_PID:
+        description: "API PID"
+        value: ${{ jobs.deploy-windows.outputs.API_PID }}
 
 jobs:
   deploy-windows:
@@ -46,6 +52,8 @@ jobs:
       AZURE_DEV_COLLECT_TELEMETRY: ${{ vars.AZURE_DEV_COLLECT_TELEMETRY }}
     outputs:
       WEB_APPURL: ${{ steps.get_output_windows.outputs.WEB_APPURL }}
+      BACKEND_RUNTIME_STACK: ${{ steps.get_output_windows.outputs.BACKEND_RUNTIME_STACK }}
+      SOLUTION_NAME: ${{ steps.get_output_windows.outputs.SOLUTION_NAME }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -181,6 +189,18 @@ jobs:
           $WEB_APP_URL = $DEPLOY_OUTPUT.WEB_APP_URL
           "WEB_APPURL=$WEB_APP_URL" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "WEB_APPURL=$WEB_APP_URL" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+          $SOLUTION_NAME = $DEPLOY_OUTPUT.SOLUTION_NAME
+          "SOLUTION_NAME=$SOLUTION_NAME" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "SOLUTION_NAME=$SOLUTION_NAME" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+          $BACKEND_RUNTIME_STACK = $DEPLOY_OUTPUT.BACKEND_RUNTIME_STACK
+          "BACKEND_RUNTIME_STACK=$BACKEND_RUNTIME_STACK" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "BACKEND_RUNTIME_STACK=$BACKEND_RUNTIME_STACK" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+          $API_PID = $DEPLOY_OUTPUT.API_PID
+          "API_PID=$API_PID" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "API_PID=$API_PID" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
       - name: Run Post-Deployment Script
         id: post_deploy

@@ -136,4 +136,7 @@ jobs:
       AZURE_ENV_OPENAI_LOCATION: ${{ needs.deploy.outputs.AZURE_ENV_OPENAI_LOCATION }}
       ENV_NAME: ${{ needs.deploy.outputs.ENV_NAME }}
       IMAGE_TAG: ${{ needs.deploy.outputs.IMAGE_TAG }}
+      BACKEND_RUNTIME_STACK: ${{ inputs.BACKEND_RUNTIME_STACK }}
+      SOLUTION_NAME: ${{ needs.deploy.outputs.SOLUTION_NAME }}
+      API_PID: ${{ needs.deploy.outputs.API_PID }}
     secrets: inherit

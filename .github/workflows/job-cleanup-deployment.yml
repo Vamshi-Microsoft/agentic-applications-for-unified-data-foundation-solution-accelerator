@@ -40,6 +40,21 @@ on:
         description: 'Docker Image Tag'
         required: true
         type: string
+      BACKEND_RUNTIME_STACK:
+        description: 'Backend Runtime Stack'
+        required: false
+        type: string
+        default: 'python'
+      SOLUTION_NAME:
+        description: 'Solution Name'
+        required: false
+        type: string
+        default: ''
+      API_PID:
+        description: 'API PID'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   cleanup-deployment:
@@ -51,6 +66,9 @@ jobs:
       AZURE_ENV_OPENAI_LOCATION: ${{ inputs.AZURE_ENV_OPENAI_LOCATION }}
       ENV_NAME: ${{ inputs.ENV_NAME }}
       IMAGE_TAG: ${{ inputs.IMAGE_TAG }}
+      BACKEND_RUNTIME_STACK: ${{ inputs.BACKEND_RUNTIME_STACK }}
+      SOLUTION_NAME: ${{ inputs.SOLUTION_NAME }}
+      API_PID: ${{ inputs.API_PID }}
     steps:
       - name: Setup Azure CLI
         shell: bash
@@ -61,26 +79,43 @@ jobs:
           az --version
 
       - name: Login to Azure
-        shell: bash
         run: |
           az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
-          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          azd auth login --client-id ${{ secrets.AZURE_CLIENT_ID }} --client-secret ${{ secrets.AZURE_CLIENT_SECRET }} --tenant-id ${{ secrets.AZURE_TENANT_ID }}
+          azd config set defaults.subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Delete Resource Group (Optimized Cleanup)
-        id: delete_rg
-        shell: bash
+      - name: Select Environment
         run: |
           set -e
-          echo "🗑️ Starting optimized resource cleanup..."
-          echo "Deleting resource group: ${{ env.RESOURCE_GROUP_NAME }}"
-          
-          az group delete \
-            --name "${{ env.RESOURCE_GROUP_NAME }}" \
-            --yes \
-            --no-wait
-          
-          echo "✅ Resource group deletion initiated (running asynchronously)"
-          echo "Note: Resources will be cleaned up in the background"
+          # Try to select the environment if it exists, otherwise create a minimal environment for cleanup
+          azd env list
+          if azd env list | grep -q "${{ env.ENV_NAME }}"; then
+            echo "Environment ${{ env.ENV_NAME }} found, selecting it..."
+            azd env select ${{ env.ENV_NAME }}
+          else
+            echo "Environment ${{ env.ENV_NAME }} not found, creating minimal environment for cleanup..."
+            azd env new ${{ env.ENV_NAME }} --no-prompt
+            azd env set AZURE_RESOURCE_GROUP "${{ env.RESOURCE_GROUP_NAME }}"
+            azd env set AZURE_SUBSCRIPTION_ID "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+            azd env set AZURE_LOCATION="${{ env.AZURE_LOCATION }}"
+            azd env set AZURE_ENV_AI_DEPLOYMENTS_LOCATION="${{ env.AZURE_ENV_OPENAI_LOCATION }}"
+            azd env set BACKEND_RUNTIME_STACK="${{ env.BACKEND_RUNTIME_STACK }}"
+            azd env set SOLUTION_NAME="${{ env.SOLUTION_NAME }}"
+            azd env set API_PID="${{ env.API_PID }}"
+          fi
+
+      - name: Cleanup Fabric Items
+        run: |
+          bash ./infra/scripts/fabric_scripts/delete_fabric_items_scripts.sh \
+            "${{ secrets.FABRIC_WORKSPACE_ID }}"
+        continue-on-error: true
+
+      - name: Delete deployment using azd
+        run: |
+          set -e
+          echo "Deleting deployment..."
+          azd down --purge --force --no-prompt
+          echo "Deployment deleted successfully."
 
       - name: Logout from Azure
         if: always()

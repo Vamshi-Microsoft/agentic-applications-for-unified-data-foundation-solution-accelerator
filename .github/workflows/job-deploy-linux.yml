@@ -38,6 +38,12 @@ on:
       WEB_APPURL:
         description: "Container Web App URL"
         value: ${{ jobs.deploy-linux.outputs.WEBAPP_URL }}
+      SOLUTION_NAME:
+        description: "Solution Name"
+        value: ${{ jobs.deploy-linux.outputs.SOLUTION_NAME }}
+      API_PID:
+        description: "API PID"
+        value: ${{ jobs.deploy-linux.outputs.API_PID }}
 
 jobs:
   deploy-linux:
@@ -46,6 +52,8 @@ jobs:
       AZURE_DEV_COLLECT_TELEMETRY: ${{ vars.AZURE_DEV_COLLECT_TELEMETRY }}
     outputs:
       WEBAPP_URL: ${{ steps.get_output_linux.outputs.WEBAPP_URL }}
+      SOLUTION_NAME: ${{ steps.get_output_linux.outputs.SOLUTION_NAME }}
+      API_PID: ${{ steps.get_output_linux.outputs.API_PID }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
