@@ -28,7 +28,7 @@ class HomePage(BasePage):
     RESPONSE_CONTAINER = "//div[contains(@class, 'chat-message') and contains(@class, 'assistant')]"
     LINE_CHART = "//canvas[contains(@aria-label, 'Line chart')]"
     DONUT_CHART = "//canvas[contains(@aria-label, 'Donut chart')]"
-    NEW_CHAT_BUTTON = "//button[@title='Create new Conversation']"
+    NEW_CHAT_BUTTON = "//button[@title='Create new']"
 
 
     def __init__(self, page):
