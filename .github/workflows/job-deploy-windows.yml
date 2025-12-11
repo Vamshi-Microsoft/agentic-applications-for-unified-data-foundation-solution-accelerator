@@ -167,12 +167,14 @@ jobs:
           "API_PID=$API_PID" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
       - name: Run Post-Deployment Scripts
-        shell: bash
         env:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        shell: bash
         run: |
           set -e
 
+          azd env get-values
+          
           bash ./infra/scripts/agent_scripts/run_create_agents_scripts.sh
 
           bash infra/scripts/fabric_scripts/run_fabric_items_scripts.sh \
