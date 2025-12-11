@@ -149,8 +149,8 @@ jobs:
           Write-Host "✅ Deployment succeeded."
 
           $WEBAPP_URL = azd env get-value WEB_APP_URL
-          "WEBAPP_URL=${WEBAPP_URL}" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          "WEBAPP_URL=${WEBAPP_URL}" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "WEBAPP_URL=$WEBAPP_URL" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "WEBAPP_URL=$WEBAPP_URL" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
           $SOLUTION_NAME = azd env get-value SOLUTION_NAME
           "SOLUTION_NAME=$SOLUTION_NAME" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
