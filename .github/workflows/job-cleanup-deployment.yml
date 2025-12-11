@@ -115,6 +115,8 @@ jobs:
 
       - name: Cleanup Fabric Items
         shell: bash
+        env:
+          PYTHONIOENCODING: utf-8
         id: cleanup_fabric
         run: |
           bash ./infra/scripts/fabric_scripts/delete_fabric_items_scripts.sh \
