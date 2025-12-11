@@ -51,7 +51,7 @@ jobs:
     env:
       AZURE_DEV_COLLECT_TELEMETRY: ${{ vars.AZURE_DEV_COLLECT_TELEMETRY }}
     outputs:
-      WEB_APPURL: ${{ steps.get_output_windows.outputs.WEB_APPURL }}
+      WEB_APPURL: ${{ steps.get_output_windows.outputs.WEBAPP_URL }}
       SOLUTION_NAME: ${{ steps.get_output_windows.outputs.SOLUTION_NAME }}
       API_PID: ${{ steps.get_output_windows.outputs.API_PID }}
 

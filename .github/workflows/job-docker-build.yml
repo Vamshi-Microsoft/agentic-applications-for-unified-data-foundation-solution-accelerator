@@ -121,10 +121,15 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ job.status }}" == "success" ]]; then
             echo "### ✅ Build Details" >> $GITHUB_STEP_SUMMARY
-            echo "Successfully built and pushed one Docker image to ACR:" >> $GITHUB_STEP_SUMMARY
+            echo "Successfully built and pushed Docker images to ACR:" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "**Built Images:**" >> $GITHUB_STEP_SUMMARY
-            echo "- \`${ACR_NAME}.azurecr.io/webapp:${{ steps.generate_docker_tag.outputs.IMAGE_TAG }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- \`${ACR_NAME}/da-app:${{ steps.generate_docker_tag.outputs.IMAGE_TAG }}\`" >> $GITHUB_STEP_SUMMARY
+            if [[ "${{ inputs.backend_runtime_stack }}" == "python" ]]; then
+              echo "- \`${ACR_NAME}/da-api:${{ steps.generate_docker_tag.outputs.IMAGE_TAG }}\`" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- \`${ACR_NAME}/da-api-dotnet:${{ steps.generate_docker_tag.outputs.IMAGE_TAG }}\`" >> $GITHUB_STEP_SUMMARY
+            fi
           else
             echo "### ❌ Build Failed" >> $GITHUB_STEP_SUMMARY
             echo "- Docker build process encountered an error" >> $GITHUB_STEP_SUMMARY
