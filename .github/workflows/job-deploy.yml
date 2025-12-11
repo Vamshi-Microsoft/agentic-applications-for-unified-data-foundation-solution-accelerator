@@ -71,7 +71,7 @@ on:
         description: "Resource Group Name"
         value: ${{ jobs.azure-setup.outputs.RESOURCE_GROUP_NAME }}
       WEB_APPURL:
-        description: "Container Web App URL"
+        description: "Web App URL"
         value: ${{ jobs.deploy-linux.outputs.WEB_APPURL || jobs.deploy-windows.outputs.WEB_APPURL }}
       ENV_NAME:
         description: "Environment Name"

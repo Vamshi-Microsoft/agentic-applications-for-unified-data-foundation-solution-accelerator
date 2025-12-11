@@ -37,7 +37,7 @@ on:
     outputs:
       WEB_APPURL:
         description: "Container Web App URL"
-        value: ${{ jobs.deploy-linux.outputs.WEBAPP_URL }}
+        value: ${{ jobs.deploy-linux.outputs.WEB_APPURL }}
       SOLUTION_NAME:
         description: "Solution Name"
         value: ${{ jobs.deploy-linux.outputs.SOLUTION_NAME }}
@@ -51,7 +51,7 @@ jobs:
     env:
       AZURE_DEV_COLLECT_TELEMETRY: ${{ vars.AZURE_DEV_COLLECT_TELEMETRY }}
     outputs:
-      WEBAPP_URL: ${{ steps.get_output_linux.outputs.WEBAPP_URL }}
+      WEB_APPURL: ${{ steps.get_output_linux.outputs.WEBAPP_URL }}
       SOLUTION_NAME: ${{ steps.get_output_linux.outputs.SOLUTION_NAME }}
       API_PID: ${{ steps.get_output_linux.outputs.API_PID }}
     steps:

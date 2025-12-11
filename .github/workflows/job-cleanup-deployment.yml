@@ -58,7 +58,8 @@ on:
 
 jobs:
   cleanup-deployment:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner_os }}
+    continue-on-error: true
     env:
       RESOURCE_GROUP_NAME: ${{ inputs.RESOURCE_GROUP_NAME }}
       AZURE_LOCATION: ${{ inputs.AZURE_LOCATION }}
@@ -71,7 +72,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        continue-on-error: ${{ inputs.trigger_type != 'workflow_dispatch' }}
 
       - name: Setup Azure CLI
         shell: bash
@@ -80,19 +80,17 @@ jobs:
             curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
           fi
           az --version
-        continue-on-error: ${{ inputs.trigger_type != 'workflow_dispatch' }}
 
       - name: Setup Azure Developer CLI
         uses: Azure/setup-azd@v2
-        continue-on-error: ${{ inputs.trigger_type != 'workflow_dispatch' }}
 
       - name: Login to Azure
+        shell: bash
         run: |
           az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
           az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           azd auth login --client-id ${{ secrets.AZURE_CLIENT_ID }} --client-secret ${{ secrets.AZURE_CLIENT_SECRET }} --tenant-id ${{ secrets.AZURE_TENANT_ID }}
           azd config set defaults.subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        continue-on-error: ${{ inputs.trigger_type != 'workflow_dispatch' }}
 
       - name: Select Environment
         shell: bash
@@ -114,7 +112,6 @@ jobs:
             azd env set SOLUTION_NAME="${{ env.SOLUTION_NAME }}"
             azd env set API_PID="${{ env.API_PID }}"
           fi
-        continue-on-error: ${{ inputs.trigger_type != 'workflow_dispatch' }}
 
       - name: Cleanup Fabric Items
         shell: bash
@@ -122,7 +119,7 @@ jobs:
         run: |
           bash ./infra/scripts/fabric_scripts/delete_fabric_items_scripts.sh \
             "${{ secrets.FABRIC_WORKSPACE_ID }}"
-        continue-on-error: ${{ inputs.trigger_type != 'workflow_dispatch' }}
+        continue-on-error: true
 
       - name: Delete deployment using azd
         shell: bash
@@ -132,7 +129,6 @@ jobs:
           echo "Deleting deployment..."
           azd down --purge --force --no-prompt
           echo "Deployment deleted successfully."
-        continue-on-error: ${{ inputs.trigger_type != 'workflow_dispatch' }}
 
       - name: Logout from Azure
         if: always()
@@ -141,7 +137,6 @@ jobs:
           azd auth logout || true
           az logout || echo "Warning: Failed to logout from Azure CLI"
           echo "Logged out from Azure."
-        continue-on-error: ${{ inputs.trigger_type != 'workflow_dispatch' }}
       
       - name: Generate Cleanup Job Summary
         if: always()
@@ -168,5 +163,3 @@ jobs:
             echo "- Check the cleanup-deployment job logs for detailed error information" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
-        continue-on-error: ${{ inputs.trigger_type != 'workflow_dispatch' }}
-
