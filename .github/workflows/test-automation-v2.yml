@@ -91,6 +91,7 @@ jobs:
         id: test1
         run: |
           if [ "${{ env.test_suite }}" == "GoldenPath-Testing" ]; then
+            mkdir -p tests/e2e-test/report/screenshots
             xvfb-run pytest --headed --html=report/report.html --self-contained-html
           fi
         working-directory: tests/e2e-test
@@ -131,7 +132,9 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           name: test-report
-          path: tests/e2e-test/report/*
+          path: |
+            tests/e2e-test/report/*.html
+            tests/e2e-test/report/screenshots/**
 
       - name: Generate E2E Test Summary
         if: always()

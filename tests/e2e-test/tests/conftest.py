@@ -2,6 +2,8 @@ import atexit
 import io
 import logging
 import os
+from datetime import datetime
+import base64
 
 
 from bs4 import BeautifulSoup
@@ -11,6 +13,7 @@ from config.constants import URL
 from playwright.sync_api import sync_playwright
 
 import pytest
+from pytest_html import extras as pytest_html
 
 
 @pytest.fixture(scope="session")
@@ -34,17 +37,6 @@ def pytest_html_report_title(report):
     report.title = "Automation_FabricSQL"
 
 
-# Add a column for descriptions
-# def pytest_html_results_table_header(cells):
-#     cells.insert(1, html.th("Description"))
-
-
-# def pytest_html_results_table_row(report, cells):
-#     cells.insert(
-#         1, html.td(report.description if hasattr(report, "description") else "")
-#     )
-
-
 log_streams = {}
 
 
@@ -64,11 +56,50 @@ def pytest_runtest_setup(item):
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
+    """
+    Unified hook to:
+    1. Capture screenshot on test failure and embed in HTML report
+    2. Capture logs and add to report description
+    """
     outcome = yield
     report = outcome.get_result()
+    
+    # Initialize extras list for pytest-html
+    extra = getattr(report, 'extras', [])
 
+    # Handle screenshot capture on failure
+    if report.when == "call" and report.failed:
+        # Get the page from the test fixture
+        if hasattr(item, 'funcargs') and 'login_logout' in item.funcargs:
+            page = item.funcargs['login_logout']
+            
+            # Create screenshots directory if it doesn't exist
+            screenshots_dir = os.path.join("report", "screenshots")
+            os.makedirs(screenshots_dir, exist_ok=True)
+            
+            # Generate screenshot filename with timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            test_name = item.name.replace(" ", "_").replace("/", "_").replace("::", "_")
+            screenshot_filename = f"failure_{test_name}_{timestamp}.png"
+            screenshot_path = os.path.join(screenshots_dir, screenshot_filename)
+            
+            try:
+                # Capture screenshot
+                page.screenshot(path=screenshot_path, full_page=True)
+                
+                # Add screenshot to HTML report as embedded base64 image
+                if os.path.exists(screenshot_path):
+                    with open(screenshot_path, 'rb') as f:
+                        screenshot_base64 = base64.b64encode(f.read()).decode('utf-8')
+                        html_img = f'<div><img src="data:image/png;base64,{screenshot_base64}" alt="screenshot" style="width:100%; max-width:800px; cursor:pointer;" onclick="window.open(this.src)" title="Click to open in new tab"/></div>'
+                        extra.append(pytest_html.extras.html(html_img))
+                
+                logging.info(f"Screenshot captured and embedded: {screenshot_path}")
+            except Exception as e:
+                logging.error(f"Failed to capture screenshot: {str(e)}")
+
+    # Handle log capture
     handler, stream = log_streams.get(item.nodeid, (None, None))
-
     if handler and stream:
         # Make sure logs are flushed
         handler.flush()
@@ -85,6 +116,9 @@ def pytest_runtest_makereport(item, call):
         log_streams.pop(item.nodeid, None)
     else:
         report.description = ""
+    
+    # Set extras for pytest-html
+    report.extras = extra
 
 
 def pytest_collection_modifyitems(items):
