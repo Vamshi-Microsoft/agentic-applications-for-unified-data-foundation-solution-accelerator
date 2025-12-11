@@ -115,6 +115,10 @@ else:
     print(f"sql database creation failed with status: {sqldb_res.status_code}")
     print(sqldb_res.text)
 
+# Wait for database to be fully ready for connections
+print("Waiting 60 seconds for database to be fully provisioned...")
+time.sleep(60)
+
 fabric_headers = get_fabric_headers()
 # get SQL DBs list
 sqldb_res = requests.get(fabric_sql_url, headers=fabric_headers)
@@ -152,36 +156,53 @@ def get_fabric_db_connection():
     database = FABRIC_SQL_DATABASE
     driver = "{ODBC Driver 18 for SQL Server}"
     
-    try:
-        conn=None
-        connection_string = ""
- 
-        with AzureCliCredential() as credential:
-            token = credential.get_token("https://database.windows.net/.default")
-            # logging.info("FABRIC-SQL-TOKEN: %s" % token.token)
-            token_bytes = token.token.encode("utf-16-LE")
-            token_struct = struct.pack(
-                f"<I{len(token_bytes)}s",
-                len(token_bytes),
-                token_bytes
-            )
+    max_retries = 5
+    retry_delay = 10  # Start with 10 seconds
+    
+    for attempt in range(1, max_retries + 1):
+        try:
+            conn = None
+            connection_string = ""
+            
+            print(f"Connection attempt {attempt}/{max_retries}...")
+            
+            with AzureCliCredential() as credential:
+                token = credential.get_token("https://database.windows.net/.default")
+                token_bytes = token.token.encode("utf-16-LE")
+                token_struct = struct.pack(
+                    f"<I{len(token_bytes)}s",
+                    len(token_bytes),
+                    token_bytes
+                )
 
-            try: 
-                SQL_COPT_SS_ACCESS_TOKEN = 1256
-                connection_string = f"DRIVER={driver};SERVER={server};DATABASE={database};"  
-                conn = pyodbc.connect( connection_string, attrs_before={SQL_COPT_SS_ACCESS_TOKEN: token_struct})      
-                print('connected to fabric sql db')        
-            except:
-                SQL_COPT_SS_ACCESS_TOKEN = 1256
-                driver = "{ODBC Driver 17 for SQL Server}"
-                connection_string = f"DRIVER={driver};SERVER={server};DATABASE={database};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"  
-                conn = pyodbc.connect( connection_string, attrs_before={SQL_COPT_SS_ACCESS_TOKEN: token_struct})      
-                print('connected to fabric sql db')     
- 
-        return conn
-    except :
-        print("Failed to connect to Fabric SQL Database")
-        pass
+                try: 
+                    SQL_COPT_SS_ACCESS_TOKEN = 1256
+                    connection_string = f"DRIVER={driver};SERVER={server};DATABASE={database};"  
+                    conn = pyodbc.connect(connection_string, attrs_before={SQL_COPT_SS_ACCESS_TOKEN: token_struct})      
+                    print('✓ Connected to Fabric SQL Database with ODBC Driver 18')        
+                    return conn
+                except Exception as e:
+                    print(f"  Driver 18 failed: {type(e).__name__}")
+                    try:
+                        SQL_COPT_SS_ACCESS_TOKEN = 1256
+                        driver = "{ODBC Driver 17 for SQL Server}"
+                        connection_string = f"DRIVER={driver};SERVER={server};DATABASE={database};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"  
+                        conn = pyodbc.connect(connection_string, attrs_before={SQL_COPT_SS_ACCESS_TOKEN: token_struct})      
+                        print('✓ Connected to Fabric SQL Database with ODBC Driver 17')     
+                        return conn
+                    except Exception as e2:
+                        print(f"  Driver 17 failed: {type(e2).__name__}: {str(e2)}")
+                        raise e2
+        
+        except Exception as e:
+            if attempt < max_retries:
+                print(f"⚠ Connection attempt {attempt} failed. Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+            else:
+                print(f"✗ Failed to connect to Fabric SQL Database after {max_retries} attempts")
+                print(f"  Final error: {type(e).__name__}: {str(e)}")
+                pass
 
 conn = get_fabric_db_connection()
 cursor = conn.cursor()
