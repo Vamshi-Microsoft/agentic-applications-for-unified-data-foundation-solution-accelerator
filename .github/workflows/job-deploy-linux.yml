@@ -153,27 +153,21 @@ jobs:
           # Deploy using azd up
           azd up --no-prompt
 
-          azd env get-values
-
           WEBAPP_URL=$(azd env get-value WEB_APP_URL)
           echo "WEBAPP_URL=${WEBAPP_URL}" >> $GITHUB_ENV
           echo "WEBAPP_URL=${WEBAPP_URL}" >> $GITHUB_OUTPUT
-          echo "Extracted WEBAPP_URL: ${WEBAPP_URL}"
 
           SOLUTION_NAME=$(azd env get-value SOLUTION_NAME)
           echo "SOLUTION_NAME=${SOLUTION_NAME}" >> $GITHUB_ENV
           echo "SOLUTION_NAME=${SOLUTION_NAME}" >> $GITHUB_OUTPUT
-          echo "Extracted SOLUTION_NAME: ${SOLUTION_NAME}"
 
           BACKEND_RUNTIME_STACK=$(azd env get-value BACKEND_RUNTIME_STACK)
           echo "BACKEND_RUNTIME_STACK=${BACKEND_RUNTIME_STACK}" >> $GITHUB_ENV
           echo "BACKEND_RUNTIME_STACK=${BACKEND_RUNTIME_STACK}" >> $GITHUB_OUTPUT
-          echo "Extracted BACKEND_RUNTIME_STACK: ${BACKEND_RUNTIME_STACK}"
 
           API_PID=$(azd env get-value API_PID)
           echo "API_PID=${API_PID}" >> $GITHUB_ENV
           echo "API_PID=${API_PID}" >> $GITHUB_OUTPUT
-          echo "Extracted API_PID: ${API_PID}"
           
       - name: Run Post-Deployment Scripts
         env:

@@ -148,8 +148,6 @@ jobs:
           
           Write-Host "✅ Deployment succeeded."
 
-          azd env get-values
-
           $WEBAPP_URL = azd env get-value WEB_APP_URL
           "WEBAPP_URL=${WEBAPP_URL}" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "WEBAPP_URL=${WEBAPP_URL}" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
@@ -169,11 +167,10 @@ jobs:
       - name: Run Post-Deployment Scripts
         env:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          PYTHONIOENCODING: utf-8
         shell: bash
         run: |
           set -e
-
-          azd env get-values
           
           bash ./infra/scripts/agent_scripts/run_create_agents_scripts.sh
 
